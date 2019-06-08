@@ -1,0 +1,22 @@
+{
+  "name": "fieldservice",
+  "version": "1.0.0",
+  "description": "Web application for monitorin field service",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src/index.js -d dist",
+    "start": "npm run build && node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/polyfill": "^7.4.4",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5"
+  }
+}
