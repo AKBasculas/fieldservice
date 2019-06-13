@@ -4,7 +4,7 @@
   "description": "Web application for monitorin field service",
   "main": "index.js",
   "scripts": {
-    "build": "babel src/index.js -d dist",
+    "build": "babel src -d dist",
     "start": "npm run build && node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,12 +12,15 @@
   "license": "ISC",
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
+    "bcrypt": "^3.0.6",
     "dotenv": "^8.0.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "mongoose": "^5.5.14"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.5",
+    "@babel/plugin-transform-async-to-generator": "^7.4.4",
     "@babel/preset-env": "^7.4.5"
   }
 }
