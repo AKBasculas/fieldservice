@@ -1,3 +1,5 @@
+require("@babel/polyfill"); //Needed for async
+
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
 const SALT_ROUNDS = 5;
@@ -29,11 +31,8 @@ userSchema.pre('save', function(next){
   });
 });
 
-userSchema.method('comparePassword', function(password){ //defines a password comparison method for the schema class
-  bcrypt.compare(password, this.password, function(err, res){ //compares a password to the user password and callbacks
-    if (err) throw err;
-    return res; //returns comparison result
-  });
+userSchema.method('comparePassword', async function(password){ //defines a password comparison method for the schema class
+  return await bcrypt.compare(password, this.password); //compares a password to the user password and callbacks
 });
 
 const User = mongoose.model('User', userSchema); //creates user model based on the schema
