@@ -13,27 +13,27 @@ const periodSchema = new mongoose.Schema({
 
 const entrySchema = new mongoose.Schema({
   user: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
   service: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Service',
     require: true
   },
   company: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
     required: true
   },
   contacts: [{
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Contact',
     required: true
   }],
   devices: [{
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Device',
     required: true
   }],
@@ -46,7 +46,7 @@ const entrySchema = new mongoose.Schema({
     required: true
   },
   ownership: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Ownership',
     required: true
   },

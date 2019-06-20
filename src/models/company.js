@@ -25,7 +25,7 @@ const companySchema = new mongoose.Schema({
     required: false
   },
   branch: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Branch',
     required: true
   }

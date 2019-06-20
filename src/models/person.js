@@ -6,7 +6,7 @@ const personSchema = new mongoose.Schema({
     required: true
   },
   branch: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Branch',
     required: true
   }
