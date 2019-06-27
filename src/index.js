@@ -76,6 +76,7 @@ app.use(passport.session());
 //permissions
 app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE]));
 app.use(['/register'], permissions.permit([permissions.PERMISSIONS.USER.CREATE]));
+app.use(['/service'], permissions.permit([permissions.PERMISSIONS.SERVICE.CREATE]));
 
 //Routing
 
@@ -139,6 +140,25 @@ app.post('/branch', (req, res, next) => {
       return res.status(200).send("The branch has been registered.");
     });
   })
+});
+
+app.post('/service', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.service, constraints.SERVICE) != undefined) return res.sendStatus(406);
+  //Check if service exists
+  models.Service.findOne({name: req.body.service.name}, function(err, service){
+    if (err) return next(err);
+    if (service) return res.status(409).send("This service already exists.");
+    //Create new service
+    let new_service = new models.Service({
+      name: req.body.service.name
+    });
+    //Save service
+    new_service.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The service has been registered.");
+    });
+  });
 });
 });
 

@@ -36,3 +36,13 @@ const BRANCH = {
     }
   }
 }
+
+//Service
+const SERVICE = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}

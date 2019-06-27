@@ -19,11 +19,15 @@ const PERMISSIONS = {
   BRANCH: {
     CREATE: "branch.create"
   },
+  SERVICE: {
+    CREATE: "service.create"
+  },
 }
 const ROLES = {
   ADMIN: [
     PERMISSIONS.USER.CREATE,
     PERMISSIONS.BRANCH.CREATE,
+    PERMISSIONS.SERVICE.CREATE,
   ],
   COMMON: [
   ]
