@@ -25,6 +25,14 @@ const PERMISSIONS = {
   COMPANY: {
     CREATE: "company.create"
   },
+  DEVICE: {
+    TYPE: "device.type.create",
+    BRAND: "device.brand.create",
+    MODEL: "device.model.create"
+  },
+  OWNERSHIP: {
+    CREATE: "ownership.create"
+  },
 }
 const ROLES = {
   ADMIN: [
@@ -32,9 +40,16 @@ const ROLES = {
     PERMISSIONS.BRANCH.CREATE,
     PERMISSIONS.SERVICE.CREATE,
     PERMISSIONS.COMPANY.CREATE,
+    PERMISSIONS.DEVICE.TYPE,
+    PERMISSIONS.DEVICE.BRAND,
+    PERMISSIONS.DEVICE.MODEL,
+    PERMISSIONS.OWNERSHIP.CREATE,
   ],
   COMMON: [
     PERMISSIONS.COMPANY.CREATE,
+    PERMISSIONS.DEVICE.TYPE.CREATE,
+    PERMISSIONS.DEVICE.BRAND.CREATE,
+    PERMISSIONS.DEVICE.MODEL.CREATE
   ]
 }
 

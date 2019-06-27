@@ -1,16 +1,34 @@
 var mongoose = require('mongoose');
 
-const deviceSchema = new mongoose.Schema({
+const modelSchema = new mongoose.Schema({
   name: {
-    type: String,
-    required: true
-  },
-  description: {
     type: String,
     required: true
   }
 });
 
-const Device = mongoose.model('Device', deviceSchema);
+const brandSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  models: {
+    type: [modelSchema],
+    required: false
+  }
+});
+
+const typeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  brands: {
+    type: [brandSchema],
+    required: false
+  }
+});
+
+const Device = mongoose.model('Device', typeSchema)
 
 export default Device;

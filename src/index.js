@@ -78,10 +78,12 @@ app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE])
 app.use(['/register'], permissions.permit([permissions.PERMISSIONS.USER.CREATE]));
 app.use(['/service'], permissions.permit([permissions.PERMISSIONS.SERVICE.CREATE]));
 app.use(['/company'], permissions.permit([permissions.PERMISSIONS.COMPANY.CREATE]));
+app.use(['/device/type'], permissions.permit([permissions.PERMISSIONS.DEVICE.TYPE]));
+app.use(['/device/brand'], permissions.permit([permissions.PERMISSIONS.DEVICE.BRAND]));
+app.use(['/device/model'], permissions.permit([permissions.PERMISSIONS.DEVICE.MODEL]));
+app.use(['/ownership'], permissions.permit([permissions.PERMISSIONS.OWNERSHIP.CREATE]))
 
 //Routing
-
-
 app.post('/login', passport.authenticate('local'), (req, res) => {
   res.sendStatus(200);
 });
@@ -186,6 +188,90 @@ app.post('/company', (req, res, next) => {
         if (err) return next(err);
         return res.status(200).send("The company and its contacts have been registered.");
       });
+    });
+  });
+});
+
+app.post('/device/type', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body.device, constraints.DEVICE.TYPE) != undefined) return res.sendStatus(406);
+  //Check if device exists
+  models.Device.findOne({name: req.body.device.type}, function(err, device){
+    if (err) return next(err);
+    if (device) return res.status(409).send("This device type already exists.");
+    //Create new device type
+    let new_device_type = new models.Device({
+      name: req.body.device.type,
+      brands: []
+    });
+    //Save device
+    new_device_type.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The device type has been registered");
+    });
+  });
+});
+
+app.post('/device/brand', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body.device, constraints.DEVICE.BRAND) != undefined) return res.sendStatus(406);
+  //Check if device type exists
+  models.Device.findOne({name: req.body.device.type}, function(err, device){
+    if (err) return next(err);
+    if (!device) return res.status(404).send("Couldn't find that device type");
+    //Check if device type brand exists
+    if (device.brands.some( b => b.name === req.body.device.brand)) return res.status(409).send("This device brand already exists for this type");
+    //Add new brand to device type
+    device.brands.push({
+      name: req.body.device.brand
+    });
+    //Save whole device
+    device.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The device brand has been registered");
+    });
+  });
+});
+
+app.post('/device/model', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body.device, constraints.DEVICE.MODEL) != undefined) return res.sendStatus(406);
+  //Check if device type exists
+  models.Device.findOne({name: req.body.device.type}, function(err, device){
+    if (err) return next(err);
+    if (!device) return res.status(404).send("Couldn't find that device type");
+    //Check if brand exists for that device type
+    var brandIndex = device.brands.findIndex(b => b.name === req.body.device.brand);
+    if (brandIndex === -1) return res.status(404).send("Couldn't find that brand for that device type");
+    //Check if model exists
+    if (device.brands[brandIndex].models.some(m => m.name === req.body.device.model)) return res.status(409).send("This device model already exists for this brand and type")
+    //Add new model to brand in device type
+    device.brands[brandIndex].models.push({
+      name: req.body.device.model
+    });
+    //Save whole device
+    device.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The device model has been registered");
+    });
+  });
+});
+
+app.post('/ownership', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body.ownership, constraints.OWNERSHIP) != undefined) return res.sendStatus(406);
+  //Check if ownership exists
+  models.Ownership.findOne({name: req.body.ownership.name}, function(err, ownership){
+    if (err) return next(err);
+    if (ownership) return res.status(409).send("This ownership already exists.");
+    //Create new ownership
+    let new_ownership = new models.Ownership({
+      name: req.body.ownership.name
+    });
+    //Save ownership
+    new_ownership.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The ownership has been registered.");
     });
   });
 });
