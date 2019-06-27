@@ -73,6 +73,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+//permissions
+app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE]));
 
 //Routing
 
@@ -108,6 +110,24 @@ app.post('/register', async (req, res) => {
   else{
     return res.sendStatus(400);
   }
+app.post('/branch', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.branch, constraints.BRANCH) != undefined) return res.sendStatus(406);
+  //Check if branch exists
+  models.Branch.findOne({name: req.body.branch.name}, function(err, branch){
+    if (err) return next(err);
+    if (branch) return res.status(409).send("This branch already exists.");
+    //Create new branch
+    let new_branch = new models.Branch({
+      name: req.body.branch.name
+    });
+    //Save branch
+    new_branch.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The branch has been registered.");
+    });
+  })
+});
 });
 
 app.post('/test', (req, res) => {

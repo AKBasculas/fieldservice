@@ -12,8 +12,12 @@ function permit(allowed) {
   }
 }
 const PERMISSIONS = {
+  BRANCH: {
+    CREATE: "branch.create"
+  },
 }
 const ROLES = {
+    PERMISSIONS.BRANCH.CREATE,
 }
 const permissions = {permit, PERMISSIONS, ROLES};
 export default permissions;
