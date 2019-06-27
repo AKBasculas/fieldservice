@@ -8,6 +8,7 @@ const validate = require('validate.js');
 
 import models from './models'; //Import database models
 import 'dotenv/config'; //Import environment variables
+import permissions from './permissions'; //Middleware for user roles and permissions
 import constraints from './validate/constraints.js'; //Constraints definitions for use with validate.js
 
 
