@@ -5,6 +5,11 @@ const vehicleSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  alias: {
+    type: String,
+    required: true,
+    unique: true
+  },
   branch: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Branch',

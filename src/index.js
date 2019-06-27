@@ -83,6 +83,7 @@ app.use(['/device/brand'], permissions.permit([permissions.PERMISSIONS.DEVICE.BR
 app.use(['/device/model'], permissions.permit([permissions.PERMISSIONS.DEVICE.MODEL]));
 app.use(['/ownership'], permissions.permit([permissions.PERMISSIONS.OWNERSHIP.CREATE]))
 app.use(['/person'], permissions.permit([permissions.PERMISSIONS.PERSON.CREATE]));
+app.use(['/vehicle'], permissions.permit([permissions.PERMISSIONS.VEHICLE.CREATE]));
 
 //Routing
 app.post('/login', passport.authenticate('local'), (req, res) => {
@@ -302,10 +303,38 @@ app.post('/person', (req, res, next) => {
     });
   });
 });
+
+app.post('/vehicle', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.vehicle, constraints.VEHICLE) != undefined) return res.sendStatus(406);
+  //Check if vehicle alias exists
+  models.Vehicle.findOne({alias: req.body.vehicle.alias}, function(err, vehicle){
+    if (err) return next(err);
+    if (vehicle) return res.status(409).send("This vehicle alias already exists");
+    //Check if user can add vehicle with that branch
+    if(!req.user.branches.some( b => b.name == req.body.vehicle.branch)) return res.sendStatus(406);
+    //Find branch
+    models.Branch.findOne({name: req.body.vehicle.branch}, function(err, branch){
+      //Create new vehicle
+      let new_vehicle = new models.Vehicle({
+        name: req.body.vehicle.name,
+        alias: req.body.vehicle.alias,
+        branch: branch._id
+      });
+      //Save vehicle
+      new_vehicle.save(function(err){
+        if (err) return next(err);
+        return res.status(200).send("The vehicle has been registered");
+      });
+    });
+  });
 });
 
 app.post('/test', (req, res) => {
-  console.log(req.body.username);
+  console.log(req.user);
+  console.log(validate(req.body.company, company_constraints));
+  console.log(req.body.company.contacts.every( contact => validate(contact, contact_constraints) === undefined));
+  res.sendStatus(200);
 });
 
 app.post('/', (req, res) => {

@@ -160,3 +160,27 @@ const PERSON = {
     }
   }
 }
+
+const VEHICLE = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  },
+  alias: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  },
+  branch: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}
+
+const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE};
+export default constraints;
