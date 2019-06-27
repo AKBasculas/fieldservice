@@ -6,8 +6,9 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const validate = require('validate.js');
 
-import models from './models'; //Import database models
+//Local modules
 import 'dotenv/config'; //Import environment variables
+import models from './models'; //Import database models
 import permissions from './permissions'; //Middleware for user roles and permissions
 import constraints from './validate/constraints.js'; //Constraints definitions for use with validate.js
 
