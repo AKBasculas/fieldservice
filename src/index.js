@@ -77,6 +77,7 @@ app.use(passport.session());
 app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE]));
 app.use(['/register'], permissions.permit([permissions.PERMISSIONS.USER.CREATE]));
 app.use(['/service'], permissions.permit([permissions.PERMISSIONS.SERVICE.CREATE]));
+app.use(['/company'], permissions.permit([permissions.PERMISSIONS.COMPANY.CREATE]));
 
 //Routing
 
@@ -157,6 +158,34 @@ app.post('/service', (req, res, next) => {
     new_service.save(function(err){
       if (err) return next(err);
       return res.status(200).send("The service has been registered.");
+    });
+  });
+});
+
+app.post('/company', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body.company, constraints.COMPANY) != undefined) return res.sendStatus(406);
+  if(!req.body.company.contacts.every( contact => validate(contact, constraints.CONTACT) === undefined)) return res.sendStatus(406);
+  //Check if company exists
+  models.Company.findOne({name: req.body.company.name}, function(err, company){
+    if (err) return next(err);
+    if (company) return res.status(409).send("This company already exists.");
+    //Check if user can add company to that branch
+    if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
+    //Find branch and its id
+    models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
+      if (err) return next(err);
+      //Save company
+      let new_company = new models.Company({
+        name: req.body.company.name,
+        address: req.body.company.address,
+        contacts: req.body.company.contacts,
+        branch: branch._id
+      });
+      new_company.save(function(err){
+        if (err) return next(err);
+        return res.status(200).send("The company and its contacts have been registered.");
+      });
     });
   });
 });

@@ -22,15 +22,22 @@ const PERMISSIONS = {
   SERVICE: {
     CREATE: "service.create"
   },
+  COMPANY: {
+    CREATE: "company.create"
+  },
 }
 const ROLES = {
   ADMIN: [
     PERMISSIONS.USER.CREATE,
     PERMISSIONS.BRANCH.CREATE,
     PERMISSIONS.SERVICE.CREATE,
+    PERMISSIONS.COMPANY.CREATE,
   ],
   COMMON: [
+    PERMISSIONS.COMPANY.CREATE,
   ]
 }
+
 const permissions = {permit, PERMISSIONS, ROLES};
+
 export default permissions;
