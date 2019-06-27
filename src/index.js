@@ -75,6 +75,7 @@ app.use(passport.session());
 
 //permissions
 app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE]));
+app.use(['/register'], permissions.permit([permissions.PERMISSIONS.USER.CREATE]));
 
 //Routing
 
@@ -88,28 +89,39 @@ app.get('/logout', function(req, res){
   res.sendStatus(200);
 });
 
-app.post('/register', async (req, res) => {
-  if (req.body.username && req.body.password){
-    if (await models.User.findOne({username: req.body.username})){
-      return res.status(409).send("That user already exists.");
-    }
-    else{
-      //TODO: VERIFY USERNAME AND PASSWORD MAYBE??
-      let user = new models.User({
+app.post('/register', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body, constraints.REGISTER) != undefined) return res.sendStatus(406);
+  if(!req.body.branches.every( branch => branch && typeof(branch) === "string")) return res.sendStatus(406);
+  //Check if user exists
+  models.User.findOne({username: req.body.username}, function (err, user){
+    if (err) return next(err);
+    if (user) return res.status(409).send("That user already exists.");
+    //TODO: Verify username and password to be valid
+    //Check if role exists
+    if (!permissions.ROLES.hasOwnProperty(req.body.role)) return res.sendStatus(406);
+    //Check if branches exist
+    models.Branch.find({name: {$in: req.body.branches}}, function(err, branches){
+      if (!branches) return res.status(404).send("Couldn't find any branch");
+      if (req.body.branches.length != branches.length) return res.status(404).send("Couldn't find one of the branches");
+      //Turn array of branch objects into array of ids
+      let branches_ids = branches.map( b => b._id);
+      //Create new user
+      let new_user = new models.User({
         username: req.body.username,
-        password: req.body.password
+        password: req.body.password,
+        role: req.body.role,
+        branches: branches_ids
       });
-      if(await user.save()){
+      //Save user
+      new_user.save(function(err){
+        if (err) return next(err);
         return res.status(200).send("You have been registered.");
-      }
-      else{
-        return res.sendStatus(400);
-      }
-    }
-  }
-  else{
-    return res.sendStatus(400);
-  }
+      });
+    });
+  });
+});
+
 app.post('/branch', (req, res, next) => {
   //Validate request data
   if (validate(req.body.branch, constraints.BRANCH) != undefined) return res.sendStatus(406);

@@ -14,7 +14,16 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
-  }
+  },
+  role: {
+    type: String,
+    required: true
+  },
+  branches: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Branch',
+    required: true
+  }]
 });
 
 userSchema.pre('save', function(next){
