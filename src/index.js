@@ -82,6 +82,7 @@ app.use(['/device/type'], permissions.permit([permissions.PERMISSIONS.DEVICE.TYP
 app.use(['/device/brand'], permissions.permit([permissions.PERMISSIONS.DEVICE.BRAND]));
 app.use(['/device/model'], permissions.permit([permissions.PERMISSIONS.DEVICE.MODEL]));
 app.use(['/ownership'], permissions.permit([permissions.PERMISSIONS.OWNERSHIP.CREATE]))
+app.use(['/person'], permissions.permit([permissions.PERMISSIONS.PERSON.CREATE]));
 
 //Routing
 app.post('/login', passport.authenticate('local'), (req, res) => {
@@ -272,6 +273,32 @@ app.post('/ownership', (req, res, next) => {
     new_ownership.save(function(err){
       if (err) return next(err);
       return res.status(200).send("The ownership has been registered.");
+    });
+  });
+});
+
+app.post('/person', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.person, constraints.PERSON) != undefined) return res.sendStatus(406);
+  //Check if person number exists
+  models.Person.findOne({number: req.body.person.number}, function(err, person){
+    if (err) return next(err);
+    if (person) return res.status(409).send("This person number already exists");
+    //Check if user can add person with that branch
+    if (!req.user.branches.some( b => b.name == req.body.person.branch)) return res.sendStatus(406);
+    //Find branch
+    models.Branch.findOne({name: req.body.person.branch}, function(err, branch){
+      //Create new person
+      let new_person = new models.Person({
+        name: req.body.person.name,
+        number: req.body.person.number,
+        branch: branch._id
+      });
+      //Save person
+      new_person.save(function(err){
+        if (err) return next(err);
+        return res.status(200).send("The person has been registered");
+      });
     });
   });
 });

@@ -130,3 +130,33 @@ const DEVICE = {
     }
   }
 }
+
+const OWNERSHIP = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}
+
+const PERSON = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  },
+  number: {
+    type: "integer",
+    presence: {
+      allowEmpty: false
+    }
+  },
+  branch: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}

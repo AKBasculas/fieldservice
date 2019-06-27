@@ -5,6 +5,11 @@ const personSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  number: {
+    type: Number,
+    required: true,
+    unique: true
+  },
   branch: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Branch',

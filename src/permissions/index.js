@@ -33,6 +33,9 @@ const PERMISSIONS = {
   OWNERSHIP: {
     CREATE: "ownership.create"
   },
+  PERSON: {
+    CREATE: "person.create"
+  },
 }
 const ROLES = {
   ADMIN: [
@@ -44,6 +47,7 @@ const ROLES = {
     PERMISSIONS.DEVICE.BRAND,
     PERMISSIONS.DEVICE.MODEL,
     PERMISSIONS.OWNERSHIP.CREATE,
+    PERMISSIONS.PERSON.CREATE,
   ],
   COMMON: [
     PERMISSIONS.COMPANY.CREATE,
