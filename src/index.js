@@ -44,7 +44,9 @@ passport.serializeUser(function(user, cb){
 });
 
 passport.deserializeUser(function(id, cb){
-  models.User.findById(id, function(err, user){
+  models.User.findById(id).
+  populate('branches').
+  exec(function(err, user){
     if (err) return cb(err);
     cb(null, user);
   });
