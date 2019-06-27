@@ -4,9 +4,12 @@ const uuid = require('uuid/v4');
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const validate = require('validate.js');
 
 import models from './models'; //Import database models
 import 'dotenv/config'; //Import environment variables
+import constraints from './validate/constraints.js'; //Constraints definitions for use with validate.js
+
 
 //Express setup
 const app = express();

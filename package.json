@@ -19,7 +19,8 @@
     "mongoose": "^5.5.14",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "validate.js": "^0.13.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
