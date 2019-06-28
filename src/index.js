@@ -26,18 +26,16 @@ db.once('open', function(){
 });
 
 //Passport setup
-passport.use(new LocalStrategy(
-  function(username, password, done){
-    models.User.findOne({username: username}, function (err, user){
-      if (err) return done(err);
-      if (!user) return done(null, false);
-      user.comparePassword(password).then(function(isMatch){
-        if (!isMatch) return done(null, false);
-        return done(null, user);
-      });
+passport.use(new LocalStrategy(function(username, password, done){
+  models.User.findOne({username: username}, function (err, user){
+    if (err) return done(err);
+    if (!user) return done(null, false);
+    user.comparePassword(password).then(function(isMatch){
+      if (!isMatch) return done(null, false);
+      return done(null, user);
     });
-  }
-));
+  });
+}));
 
 passport.serializeUser(function(user, cb){
   cb(null, user.id);
