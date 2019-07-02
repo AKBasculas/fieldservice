@@ -50,6 +50,15 @@ passport.deserializeUser(function(id, cb){
   });
 });
 
+//Validate setup
+validate.extend(validate.validators.datetime,{
+  parse: function(value, options){
+    return Date.parse(value);
+  },
+  format: function(value, options){
+    return Date(value);
+  }
+});
 
 // MIDDLEWARE
 //express parsing
