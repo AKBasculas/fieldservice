@@ -8,7 +8,17 @@ const periodSchema = new mongoose.Schema({
   endtime: {
     type: Date,
     required: true
-  }
+  },
+  people: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Person',
+    required: true
+  }],
+  vehicles: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vehicle',
+    required: true
+  }],
 });
 
 const deviceSchema = new mongoose.Schema({
@@ -60,16 +70,6 @@ const entrySchema = new mongoose.Schema({
     type: [periodSchema],
     required: true
   },
-  persons: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Person',
-    required: true
-  }],
-  vehicles: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
-    required: true
-  }],
   cost: {
     type: Number,
     required: true

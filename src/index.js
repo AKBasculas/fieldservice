@@ -337,11 +337,132 @@ app.post('/vehicle', (req, res, next) => {
   });
 });
 
-app.post('/test', (req, res) => {
-  console.log(req.user);
-  console.log(validate(req.body.company, company_constraints));
-  console.log(req.body.company.contacts.every( contact => validate(contact, contact_constraints) === undefined));
-  res.sendStatus(200);
+app.post('/entry', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.entry, constraints.ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
+  if (!req.body.entry.contacts.every( contact => contact && typeof(contact) === "string")) return res.status(406).send("Contacts Not Acceptable");
+  if (!req.body.entry.devices.every( device => validate(device, constraints.ENTRY.DEVICE) === undefined)) return res.status(406).send("Devices Not Acceptable");
+  if (!req.body.entry.periods.every( period => {console.log(validate(period, constraints.ENTRY.PERIOD))
+    return validate(period, constraints.ENTRY.PERIOD) === undefined})) return res.status(406).send("Periods Not Acceptable");
+  if (!req.body.entry.periods.every( period => period.people.every(person => person && typeof(person === "string")) && period.vehicles.every(vehicle => vehicle && typeof(vehicle === "string")))) return res.status(406).send("Person and vehicle Not Acceptable");
+  //Check if user can add to that branch
+  if (!req.user.branches.some(b => b._id == req.body.entry.branch)) return res.status(406).send("User Not Acceptable");
+  //Check if branch exists
+  models.Branch.findById(req.body.entry.branch, function(err, branch){
+    if (err) return next(err);
+    if (!branch) return res.status(404).send("Couldn't find that branch");
+    //Check if service exists
+    models.Service.findById(req.body.entry.service, function(err, service){
+      if (err) return next(err);
+      if (!service) return res.status(404).send("Couldn't find that service");
+      //Check if company exists
+      models.Company.findById(req.body.entry.company, function(err, company){
+        if (err) return next(err);
+        if (!company) return res.status(404).send("Couldn't find that company");
+        //Check if contacts exist in that company
+        if (!company.contacts.every(contact => req.body.entry.contacts.includes(contact._id.toString()))) return res.status(404).send("Couldn't find one of the contacts");
+        //Check if ownership exists
+        models.Ownership.findById(req.body.entry.ownership, function(err, ownership){
+          if (err) return next(err);
+          if (!ownership) return res.status(404).send("Couldn't find that ownership");
+          //Check if devices exist
+          try{
+            (async function findDevices() {
+              for (let i = 0; i < req.body.entry.devices.length; i++){
+                let device = req.body.entry.devices[i];
+                let type = await models.Device.findById(device.type).exec();
+                if (!type) return res.status(404).send("Couldn't find a device type");
+                let brandIndex = type.brands.findIndex(brand => brand._id == device.brand);
+                if (brandIndex === -1) return res.status(404).send("Couldn't find a brand for its device type");
+                if (!type.brands[brandIndex].models.some(model => model._id == device.model)) return res.status(404).send("Couldn't find a model for its brand and device type");
+              }
+              //Check if period has correct datetimes, check persons and vehicles exist
+              (async function checkPeriod(){
+                for (let i = 0; i < req.body.entry.periods.length; i++){
+                  let period = req.body.entry.periods[i];
+                  console.log(period.endtime);
+                  if (Date.parse(period.starttime) >= Date.parse(period.endtime)) return res.sendStatus(406);
+                  //Check if people exist
+                  for (let j = 0; j < period.people.length; j++){
+                    let person = period.people[j];
+                    if (!await models.Person.findById(person).exec()) return res.status(404).send("Couldn't find a person");
+                  }
+                  //Check if vehicles exist
+                  for (let j = 0; j < period.vehicles.length; j++){
+                    let vehicle = period.vehicles[j];
+                    if (!await models.Vehicle.findById(vehicle).exec()) return res.status(404).send("Couldn't find a vehicle");
+                  }
+                  //Check if there is splices of people or vehicles
+                  const entries = await models.Entry.find({
+                    periods: {
+                      $elemMatch: {
+                        $and: [
+                          {
+                            $or: [
+                              {
+                                $and: [
+                                  {starttime:{$gte: new Date(period.starttime)}},
+                                  {starttime:{$lte: new Date(period.endtime)}}
+                                ]
+                              },
+                              {
+                                $and: [
+                                  {endtime:{$gte: new Date(period.starttime)}},
+                                  {endtime:{$lte: new Date(period.endtime)}}
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            $or: [
+                              {vehicles: {$in: period.vehicles.map(v => mongoose.Types.ObjectId(v))}},
+                              {people: {$in: period.people.map(p => mongoose.Types.ObjectId(p))}}
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }).exec();
+                  if(entries.length) return res.status(409).send("Space ocuppied");
+                }
+                //{periods: {$elemMatch: {starttime:{$lt: new Date(2012, 03, 22)}}}}
+                //{periods: {$elemMatch: {$and: [{$or: [{$and: [{starttime:{$gt: new Date(2012, 03, 22)}}, {starttime:{$lt: new Date(2012, 03, 25)}}]},{$and: [{endtime:{$gt: new Date(2012, 03, 22)}}, {endtime:{$lt: new Date(2012, 03, 25)}}]}]},{$or: [{vehicles: {$in: [ObjectId("5d151087faa00c2058aef65d")]}}, {people: {$in: [ObjectId("5d1508d4fb84f9059051d906")]}}]}]}}}
+
+                //Create entry
+                let new_entry = new models.Entry({
+                  user: req.user._id,
+                  branch: req.body.entry.branch,
+                  service: req.body.entry.service,
+                  company: req.body.entry.company,
+                  contacts: req.body.entry.contacts,
+                  devices: req.body.entry.devices,
+                  periods: req.body.entry.periods,
+                  cost: req.body.entry.cost,
+                  ownership: req.body.entry.ownership,
+                  comments: req.body.entry.comments
+                });
+                //Save entry
+                new_entry.save(function(err){
+                  if (err) return next(err);
+                  return res.status(200).send("The entry has been registered");
+                });
+              })();
+            })();
+          }
+          catch (err){
+            return next(err);
+          }
+        });
+      });
+    });
+  });
+});
+
+app.get('/test', (req, res, next) => {
+  models.Entry.find({periods: {$elemMatch: {$and: [{$or: [{$and: [{starttime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {starttime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]},{$and: [{endtime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {endtime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]}]},{$or: [{vehicles: {$in: [mongoose.Types.ObjectId("5d151087faa00c2058aef65d")]}}, {people: {$in: [mongoose.Types.ObjectId("5d1508d4fb84f9059051d906")]}}]}]}}}).populate('periods.people').populate('user', 'username').populate('contacts').exec(function(err, entry){
+    if (err) next(err);
+    res.send(entry);
+  });
 });
 
 app.post('/', (req, res) => {

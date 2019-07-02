@@ -182,5 +182,104 @@ const VEHICLE = {
   }
 }
 
-const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE};
+const ENTRY = {
+  ENTRY: {
+    branch: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    service: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    company: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    contacts: {
+      type: "array",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    devices: {
+      type: "array",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    periods: {
+      type: "array",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    cost: {
+      type: "number",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    ownership: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    comments: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    }
+  },
+  PERIOD: {
+    starttime: {
+      datetime: true
+    },
+    endtime: {
+      datetime: true
+    },
+    people: {
+      type: "array",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    vehicles: {
+      type: "array",
+      presence: {
+        allowEmpty: false
+      }
+    }
+  },
+  DEVICE: {
+    type: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    brand: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    },
+    model: {
+      type: "string",
+      presence: {
+        allowEmpty: false
+      }
+    }
+  }
+}
+
+const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE, ENTRY};
 export default constraints;
