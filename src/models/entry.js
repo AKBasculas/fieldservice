@@ -59,7 +59,7 @@ const entrySchema = new mongoose.Schema({
   },
   contacts: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company.contacts',
+    ref: 'Contact',
     required: true
   }],
   devices: [{

@@ -1,16 +1,5 @@
 var mongoose = require('mongoose');
 
-const contactSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  phone: {
-    type: String,
-    required: false
-  }
-});
-
 const companySchema = new mongoose.Schema({
   name: {
     type: String,
@@ -20,10 +9,11 @@ const companySchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  contacts: {
-    type: [contactSchema],
+  contacts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Contact',
     required: false
-  },
+  }],
   branch: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Branch',

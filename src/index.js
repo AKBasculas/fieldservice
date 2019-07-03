@@ -173,29 +173,51 @@ app.post('/service', (req, res, next) => {
   });
 });
 
+app.post('/contact', (req, res, next) =>{
+  //Validate request data
+  if(validate(req.body.contact, constraints.CONTACT) != undefined) return res.sendStatus(406);
+  //Create new contact
+  let new_contact = new models.Contact({
+    name: req.body.contact.name,
+    phone: req.body.contact.phone
+  });
+  new_contact.save(function(err){
+    if (err) return next(err);
+    return res.status(200).send("The contact has been registered");
+  });
+});
+
 app.post('/company', (req, res, next) => {
   //Validate request data
   if(validate(req.body.company, constraints.COMPANY) != undefined) return res.sendStatus(406);
-  if(!req.body.company.contacts.every( contact => validate(contact, constraints.CONTACT) === undefined)) return res.sendStatus(406);
+  if(!req.body.company.contacts.every( contact => contact && typeof(contact) === "string")) return res.sendStatus(406);
   //Check if company exists
   models.Company.findOne({name: req.body.company.name}, function(err, company){
     if (err) return next(err);
     if (company) return res.status(409).send("This company already exists.");
-    //Check if user can add company to that branch
-    if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
-    //Find branch and its id
-    models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
-      if (err) return next(err);
-      //Save company
-      let new_company = new models.Company({
-        name: req.body.company.name,
-        address: req.body.company.address,
-        contacts: req.body.company.contacts,
-        branch: branch._id
-      });
-      new_company.save(function(err){
+    //Check if contacts exist
+    models.Contact.find({
+      _id: {
+        $in: req.body.company.contacts.map(c => mongoose.Types.ObjectId(c))
+      }
+    }).exec(function(err, contacts){
+      if (!(contacts.length === req.body.company.contacts.length)) return res.sendStatus(406);
+      //Check if user can add company to that branch
+      if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
+      //Find branch and its id
+      models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
         if (err) return next(err);
-        return res.status(200).send("The company and its contacts have been registered.");
+        //Save company
+        let new_company = new models.Company({
+          name: req.body.company.name,
+          address: req.body.company.address,
+          contacts: req.body.company.contacts,
+          branch: branch._id
+        });
+        new_company.save(function(err){
+          if (err) return next(err);
+          return res.status(200).send("The company and its contacts have been registered.");
+        });
       });
     });
   });
@@ -425,9 +447,6 @@ app.post('/entry', (req, res, next) => {
                   }).exec();
                   if(entries.length) return res.status(409).send("Space ocuppied");
                 }
-                //{periods: {$elemMatch: {starttime:{$lt: new Date(2012, 03, 22)}}}}
-                //{periods: {$elemMatch: {$and: [{$or: [{$and: [{starttime:{$gt: new Date(2012, 03, 22)}}, {starttime:{$lt: new Date(2012, 03, 25)}}]},{$and: [{endtime:{$gt: new Date(2012, 03, 22)}}, {endtime:{$lt: new Date(2012, 03, 25)}}]}]},{$or: [{vehicles: {$in: [ObjectId("5d151087faa00c2058aef65d")]}}, {people: {$in: [ObjectId("5d1508d4fb84f9059051d906")]}}]}]}}}
-
                 //Create entry
                 let new_entry = new models.Entry({
                   user: req.user._id,
