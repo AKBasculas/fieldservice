@@ -93,15 +93,18 @@ app.use(['/person'], permissions.permit([permissions.PERMISSIONS.PERSON.CREATE])
 app.use(['/vehicle'], permissions.permit([permissions.PERMISSIONS.VEHICLE.CREATE]));
 
 //Routing
+//Login to local db
 app.post('/login', passport.authenticate('local'), (req, res) => {
   res.sendStatus(200);
 });
 
+//Logout
 app.get('/logout', function(req, res){
   req.logout();
   res.sendStatus(200);
 });
 
+//Create user
 app.post('/register', (req, res, next) => {
   //Validate request data
   if (validate(req.body, constraints.REGISTER) != undefined) return res.sendStatus(406);
@@ -135,6 +138,7 @@ app.post('/register', (req, res, next) => {
   });
 });
 
+//Create branch
 app.post('/branch', (req, res, next) => {
   //Validate request data
   if (validate(req.body.branch, constraints.BRANCH) != undefined) return res.sendStatus(406);
@@ -154,6 +158,7 @@ app.post('/branch', (req, res, next) => {
   })
 });
 
+//Create service
 app.post('/service', (req, res, next) => {
   //Validate request data
   if (validate(req.body.service, constraints.SERVICE) != undefined) return res.sendStatus(406);
@@ -173,6 +178,7 @@ app.post('/service', (req, res, next) => {
   });
 });
 
+//Create contact
 app.post('/contact', (req, res, next) =>{
   //Validate request data
   if(validate(req.body.contact, constraints.CONTACT) != undefined) return res.sendStatus(406);
@@ -187,42 +193,68 @@ app.post('/contact', (req, res, next) =>{
   });
 });
 
+//Create company
 app.post('/company', (req, res, next) => {
   //Validate request data
   if(validate(req.body.company, constraints.COMPANY) != undefined) return res.sendStatus(406);
-  if(!req.body.company.contacts.every( contact => contact && typeof(contact) === "string")) return res.sendStatus(406);
-  //Check if company exists
+  //Check if company exists with that name
   models.Company.findOne({name: req.body.company.name}, function(err, company){
     if (err) return next(err);
-    if (company) return res.status(409).send("This company already exists.");
-    //Check if contacts exist
-    models.Contact.find({
-      _id: {
-        $in: req.body.company.contacts.map(c => mongoose.Types.ObjectId(c))
-      }
-    }).exec(function(err, contacts){
-      if (!(contacts.length === req.body.company.contacts.length)) return res.sendStatus(406);
-      //Check if user can add company to that branch
-      if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
-      //Find branch and its id
-      models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
+    if (company) return res.status(409).send("This company name already exists.");
+    //Check if user can add company to that branch
+    if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
+    //Find branch and its id
+    models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
+      if (err) return next(err);
+      //Save company
+      let new_company = new models.Company({
+        name: req.body.company.name,
+        address: req.body.company.address,
+        branch: branch._id
+      });
+      new_company.save(function(err){
         if (err) return next(err);
-        //Save company
-        let new_company = new models.Company({
-          name: req.body.company.name,
-          address: req.body.company.address,
-          contacts: req.body.company.contacts,
-          branch: branch._id
-        });
-        new_company.save(function(err){
-          if (err) return next(err);
-          return res.status(200).send("The company and its contacts have been registered.");
-        });
+        return res.status(200).send("The company has been registered.");
       });
     });
   });
 });
 
+//Add company contacts
+app.put('/company/contacts', (req, res, next) => {
+  //Validate request data
+  if(validate(req.body, constraints.ADD_COMPANY_CONTACTS) != undefined) return res.sendStatus(406);
+  if(!req.body.contacts.every( contact => contact && typeof(contact) === "string")) return res.sendStatus(406);
+  //Check if company exists for user branches
+  models.Company.findOne({
+    $and: [
+      {_id: mongoose.Types.ObjectId(req.body.company)},
+      {branch: {$in: req.user.branches.map( b => mongoose.Types.ObjectId(b._id))}}
+    ]
+  }, function(err, company){
+    if (err) return next(err);
+    if (!company) return res.status(404).send("Couldn't find that company.");
+    //Check if contacts exist
+    models.Contact.find({
+      _id: {
+        $in: req.body.contacts.map(c => mongoose.Types.ObjectId(c))
+      }
+    }, function(err, contacts){
+      if (contacts.length != req.body.contacts.length) return res.status(404).send("Couldn't find one of the contacts");
+      //Add contacts to company if they don't already exist
+      contacts.forEach(contact => {
+        if (!company.contacts.some(c => c.toString() == contact._id)) company.contacts.push(contact._id);
+      });
+      //Save company
+      company.save(function(err){
+        if (err) return next(err);
+        return res.status(200).send("The contacts have been added to the company.")
+      });
+    });
+  });
+});
+
+//Create device type
 app.post('/device/type', (req, res, next) => {
   //Validate request data
   if(validate(req.body.device, constraints.DEVICE.TYPE) != undefined) return res.sendStatus(406);
@@ -243,6 +275,7 @@ app.post('/device/type', (req, res, next) => {
   });
 });
 
+//Create device brand
 app.post('/device/brand', (req, res, next) => {
   //Validate request data
   if(validate(req.body.device, constraints.DEVICE.BRAND) != undefined) return res.sendStatus(406);
@@ -264,6 +297,7 @@ app.post('/device/brand', (req, res, next) => {
   });
 });
 
+//Create device model
 app.post('/device/model', (req, res, next) => {
   //Validate request data
   if(validate(req.body.device, constraints.DEVICE.MODEL) != undefined) return res.sendStatus(406);
@@ -288,6 +322,7 @@ app.post('/device/model', (req, res, next) => {
   });
 });
 
+//Create ownership
 app.post('/ownership', (req, res, next) => {
   //Validate request data
   if(validate(req.body.ownership, constraints.OWNERSHIP) != undefined) return res.sendStatus(406);
@@ -307,6 +342,7 @@ app.post('/ownership', (req, res, next) => {
   });
 });
 
+//Create person
 app.post('/person', (req, res, next) => {
   //Validate request data
   if (validate(req.body.person, constraints.PERSON) != undefined) return res.sendStatus(406);
@@ -333,6 +369,7 @@ app.post('/person', (req, res, next) => {
   });
 });
 
+//Create vehicle
 app.post('/vehicle', (req, res, next) => {
   //Validate request data
   if (validate(req.body.vehicle, constraints.VEHICLE) != undefined) return res.sendStatus(406);
@@ -359,6 +396,7 @@ app.post('/vehicle', (req, res, next) => {
   });
 });
 
+//Create entry
 app.post('/entry', (req, res, next) => {
   //Validate request data
   if (validate(req.body.entry, constraints.ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
@@ -477,6 +515,7 @@ app.post('/entry', (req, res, next) => {
   });
 });
 
+//TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.find({periods: {$elemMatch: {$and: [{$or: [{$and: [{starttime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {starttime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]},{$and: [{endtime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {endtime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]}]},{$or: [{vehicles: {$in: [mongoose.Types.ObjectId("5d151087faa00c2058aef65d")]}}, {people: {$in: [mongoose.Types.ObjectId("5d1508d4fb84f9059051d906")]}}]}]}}}).populate('periods.people').populate('user', 'username').populate('contacts').exec(function(err, entry){
     if (err) next(err);
@@ -497,3 +536,11 @@ app.delete('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => console.log(`Example app listening on port ${process.env.PORT}!`))
+
+//TODO: Seperate adding contacts to company
+//TODO: Refactor Device models
+//TODO: Seperate creation of type, brand, model
+//TODO: Refactor CONSTRAINTS
+//TODO: Refactor PERMISSIONS
+//TODO: Data should be sent with ids when refrencing an object when creating new models
+//TODO: Validate ids to be 24 chars

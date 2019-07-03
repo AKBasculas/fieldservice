@@ -61,9 +61,6 @@ const COMPANY = {
       allowEmpty: false
     }
   },
-  contacts: {
-    type: "array"
-  },
   branch: {
     type: "string",
     presence: {
@@ -281,5 +278,20 @@ const ENTRY = {
   }
 }
 
-const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE, ENTRY};
+const ADD_COMPANY_CONTACTS = {
+  company: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  },
+  contacts: {
+    type: "array",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}
+
+const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE, ENTRY, ADD_COMPANY_CONTACTS};
 export default constraints;
