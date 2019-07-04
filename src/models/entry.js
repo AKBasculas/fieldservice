@@ -21,21 +21,6 @@ const periodSchema = new mongoose.Schema({
   }],
 });
 
-const deviceSchema = new mongoose.Schema({
-  type: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Device'
-  },
-  brand: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Device.brands'
-  },
-  model: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Device.brands.models'
-  }
-});
-
 const entrySchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -62,9 +47,10 @@ const entrySchema = new mongoose.Schema({
     ref: 'Contact',
     required: true
   }],
-  devices: [{
-    type: deviceSchema,
-    required: false
+  devicemodels: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DeviceModel',
+    required: true
   }],
   periods: {
     type: [periodSchema],

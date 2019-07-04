@@ -68,8 +68,6 @@ app.use(express.json());
 //express-session
 app.use(session({
   genid: (req) => {
-    console.log('Inside the session middleware');
-    console.log(req.sessionID);
     return uuid();
   },
   secret: 'keyboard cat',
@@ -257,20 +255,19 @@ app.put('/company/contacts', (req, res, next) => {
 //Create device type
 app.post('/device/type', (req, res, next) => {
   //Validate request data
-  if(validate(req.body.device, constraints.DEVICE.TYPE) != undefined) return res.sendStatus(406);
-  //Check if device exists
-  models.Device.findOne({name: req.body.device.type}, function(err, device){
+  if(validate(req.body.devicetype, constraints.CREATE_DEVICE_TYPE) != undefined) return res.sendStatus(406);
+  //Check if device type exists with same name
+  models.DeviceType.findOne({name: req.body.devicetype.name}, function(err, devicetype){
     if (err) return next(err);
-    if (device) return res.status(409).send("This device type already exists.");
+    if (devicetype) return res.status(409).send("A device type with that name already exists.");
     //Create new device type
-    let new_device_type = new models.Device({
-      name: req.body.device.type,
-      brands: []
+    let new_devicetype = new models.DeviceType({
+      name: req.body.devicetype.name,
     });
-    //Save device
-    new_device_type.save(function(err){
+    //Save device type
+    new_devicetype.save(function(err){
       if (err) return next(err);
-      return res.status(200).send("The device type has been registered");
+      return res.status(200).send("The device type has been added.");
     });
   });
 });
@@ -278,21 +275,19 @@ app.post('/device/type', (req, res, next) => {
 //Create device brand
 app.post('/device/brand', (req, res, next) => {
   //Validate request data
-  if(validate(req.body.device, constraints.DEVICE.BRAND) != undefined) return res.sendStatus(406);
-  //Check if device type exists
-  models.Device.findOne({name: req.body.device.type}, function(err, device){
+  if(validate(req.body.devicebrand, constraints.CREATE_DEVICE_BRAND) != undefined) return res.sendStatus(406);
+  //Check if device brand exists with same name
+  models.DeviceBrand.findOne({name: req.body.devicebrand.name}, function(err, devicebrand){
     if (err) return next(err);
-    if (!device) return res.status(404).send("Couldn't find that device type");
-    //Check if device type brand exists
-    if (device.brands.some( b => b.name === req.body.device.brand)) return res.status(409).send("This device brand already exists for this type");
-    //Add new brand to device type
-    device.brands.push({
-      name: req.body.device.brand
+    if (devicebrand) return res.status(409).send("A device brand with that name already exists.");
+    //Create new device brand
+    let new_devicebrand = new models.DeviceBrand({
+      name: req.body.devicebrand.name,
     });
-    //Save whole device
-    device.save(function(err){
+    //Save device brand
+    new_devicebrand.save(function(err){
       if (err) return next(err);
-      return res.status(200).send("The device brand has been registered");
+      return res.status(200).send("The device brand has been added.");
     });
   });
 });
@@ -300,24 +295,31 @@ app.post('/device/brand', (req, res, next) => {
 //Create device model
 app.post('/device/model', (req, res, next) => {
   //Validate request data
-  if(validate(req.body.device, constraints.DEVICE.MODEL) != undefined) return res.sendStatus(406);
-  //Check if device type exists
-  models.Device.findOne({name: req.body.device.type}, function(err, device){
+  if(validate(req.body.devicemodel, constraints.CREATE_DEVICE_MODEL) != undefined) return res.sendStatus(406);
+  //Check if device model exists with same name
+  models.DeviceModel.findOne({name: req.body.devicemodel.name}, function(err, devicemodel){
     if (err) return next(err);
-    if (!device) return res.status(404).send("Couldn't find that device type");
-    //Check if brand exists for that device type
-    var brandIndex = device.brands.findIndex(b => b.name === req.body.device.brand);
-    if (brandIndex === -1) return res.status(404).send("Couldn't find that brand for that device type");
-    //Check if model exists
-    if (device.brands[brandIndex].models.some(m => m.name === req.body.device.model)) return res.status(409).send("This device model already exists for this brand and type")
-    //Add new model to brand in device type
-    device.brands[brandIndex].models.push({
-      name: req.body.device.model
-    });
-    //Save whole device
-    device.save(function(err){
+    if (devicemodel) return res.status(409).send("A device model with that name already exists.");
+    //Check if brand exists
+    models.DeviceBrand.findOne({_id: req.body.devicemodel.brand}, function(err, devicebrand){
       if (err) return next(err);
-      return res.status(200).send("The device model has been registered");
+      if (!devicebrand) return res.status(404).send("Couldn't find that device brand.");
+      //Check if type exists
+      models.DeviceType.findOne({_id: req.body.devicemodel.type}, function(err, devicetype){
+        if (err) return next(err);
+        if (!devicetype) return res.status(404).send("Couldn't find that device type.");
+        //Create new device model
+        let new_devicemodel = new models.DeviceModel({
+          name: req.body.devicemodel.name,
+          brand: devicebrand._id,
+          type: devicetype._id
+        });
+        //Save device model
+        new_devicemodel.save(function(err){
+          if (err) return next(err);
+          return res.status(200).send("The device model has been added.");
+        });
+      });
     });
   });
 });
@@ -401,9 +403,8 @@ app.post('/entry', (req, res, next) => {
   //Validate request data
   if (validate(req.body.entry, constraints.ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
   if (!req.body.entry.contacts.every( contact => contact && typeof(contact) === "string")) return res.status(406).send("Contacts Not Acceptable");
-  if (!req.body.entry.devices.every( device => validate(device, constraints.ENTRY.DEVICE) === undefined)) return res.status(406).send("Devices Not Acceptable");
-  if (!req.body.entry.periods.every( period => {console.log(validate(period, constraints.ENTRY.PERIOD))
-    return validate(period, constraints.ENTRY.PERIOD) === undefined})) return res.status(406).send("Periods Not Acceptable");
+  if (!req.body.entry.devicemodels.every( devicemodel => devicemodel && typeof(devicemodel) === "string")) return res.status(406).send("Devices Not Acceptable");
+  if (!req.body.entry.periods.every( period => validate(period, constraints.ENTRY.PERIOD) === undefined)) return res.status(406).send("Periods Not Acceptable");
   if (!req.body.entry.periods.every( period => period.people.every(person => person && typeof(person === "string")) && period.vehicles.every(vehicle => vehicle && typeof(vehicle === "string")))) return res.status(406).send("Person and vehicle Not Acceptable");
   //Check if user can add to that branch
   if (!req.user.branches.some(b => b._id == req.body.entry.branch)) return res.status(406).send("User Not Acceptable");
@@ -420,27 +421,20 @@ app.post('/entry', (req, res, next) => {
         if (err) return next(err);
         if (!company) return res.status(404).send("Couldn't find that company");
         //Check if contacts exist in that company
-        if (!company.contacts.every(contact => req.body.entry.contacts.includes(contact._id.toString()))) return res.status(404).send("Couldn't find one of the contacts");
+        if (!req.body.entry.contacts.every(contact => company.contacts.some(c => c.toString() === contact))) return res.status(404).send("Couldn't find one of the contacts");
         //Check if ownership exists
         models.Ownership.findById(req.body.entry.ownership, function(err, ownership){
           if (err) return next(err);
           if (!ownership) return res.status(404).send("Couldn't find that ownership");
-          //Check if devices exist
-          try{
-            (async function findDevices() {
-              for (let i = 0; i < req.body.entry.devices.length; i++){
-                let device = req.body.entry.devices[i];
-                let type = await models.Device.findById(device.type).exec();
-                if (!type) return res.status(404).send("Couldn't find a device type");
-                let brandIndex = type.brands.findIndex(brand => brand._id == device.brand);
-                if (brandIndex === -1) return res.status(404).send("Couldn't find a brand for its device type");
-                if (!type.brands[brandIndex].models.some(model => model._id == device.model)) return res.status(404).send("Couldn't find a model for its brand and device type");
-              }
+          //TODO: Check if device models exist
+          models.DeviceModel.find({_id: {$in: req.body.entry.devicemodels.map(d => mongoose.Types.ObjectId(d))}}, function(err, devicemodels){
+            if (err) return next(err);
+            if (devicemodels.length != req.body.entry.devicemodels.length) return res.status(404).send("Couldn't find one of the device models");
+            try{
               //Check if period has correct datetimes, check persons and vehicles exist
               (async function checkPeriod(){
                 for (let i = 0; i < req.body.entry.periods.length; i++){
                   let period = req.body.entry.periods[i];
-                  console.log(period.endtime);
                   if (Date.parse(period.starttime) >= Date.parse(period.endtime)) return res.sendStatus(406);
                   //Check if people exist
                   for (let j = 0; j < period.people.length; j++){
@@ -492,7 +486,7 @@ app.post('/entry', (req, res, next) => {
                   service: req.body.entry.service,
                   company: req.body.entry.company,
                   contacts: req.body.entry.contacts,
-                  devices: req.body.entry.devices,
+                  devicemodels: req.body.entry.devicemodels,
                   periods: req.body.entry.periods,
                   cost: req.body.entry.cost,
                   ownership: req.body.entry.ownership,
@@ -504,11 +498,11 @@ app.post('/entry', (req, res, next) => {
                   return res.status(200).send("The entry has been registered");
                 });
               })();
-            })();
-          }
-          catch (err){
-            return next(err);
-          }
+            }
+            catch (err){
+              return next(err);
+            }
+          });
         });
       });
     });
@@ -537,9 +531,6 @@ app.delete('/', (req, res) => {
 
 app.listen(process.env.PORT, () => console.log(`Example app listening on port ${process.env.PORT}!`))
 
-//TODO: Seperate adding contacts to company
-//TODO: Refactor Device models
-//TODO: Seperate creation of type, brand, model
 //TODO: Refactor CONSTRAINTS
 //TODO: Refactor PERMISSIONS
 //TODO: Data should be sent with ids when refrencing an object when creating new models

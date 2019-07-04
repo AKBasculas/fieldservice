@@ -83,47 +83,39 @@ const CONTACT = {
 }
 
 //Device
-const DEVICE = {
-  TYPE: {
-    type: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
+const CREATE_DEVICE_TYPE = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}
+const CREATE_DEVICE_BRAND = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
+  }
+}
+const CREATE_DEVICE_MODEL = {
+  name: {
+    type: "string",
+    presence: {
+      allowEmpty: false
     }
   },
-  BRAND: {
-    type: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    },
-    brand: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
+  brand: {
+    type: "string",
+    presence: {
+      allowEmpty: false
     }
   },
-  MODEL: {
-    type:{
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    },
-    brand: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    },
-    model: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
+  type: {
+    type: "string",
+    presence: {
+      allowEmpty: false
     }
   }
 }
@@ -205,7 +197,7 @@ const ENTRY = {
         allowEmpty: false
       }
     },
-    devices: {
+    devicemodels: {
       type: "array",
       presence: {
         allowEmpty: false
@@ -255,26 +247,6 @@ const ENTRY = {
         allowEmpty: false
       }
     }
-  },
-  DEVICE: {
-    type: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    },
-    brand: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    },
-    model: {
-      type: "string",
-      presence: {
-        allowEmpty: false
-      }
-    }
   }
 }
 
@@ -293,5 +265,19 @@ const ADD_COMPANY_CONTACTS = {
   }
 }
 
-const constraints = {BRANCH, SERVICE, COMPANY, CONTACT, DEVICE, REGISTER, OWNERSHIP, PERSON, VEHICLE, ENTRY, ADD_COMPANY_CONTACTS};
+const constraints = {
+  BRANCH,
+  SERVICE,
+  COMPANY,
+  CONTACT,
+  REGISTER,
+  OWNERSHIP,
+  PERSON,
+  VEHICLE,
+  ENTRY,
+  ADD_COMPANY_CONTACTS,
+  CREATE_DEVICE_TYPE,
+  CREATE_DEVICE_BRAND,
+  CREATE_DEVICE_MODEL
+};
 export default constraints;

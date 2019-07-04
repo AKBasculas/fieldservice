@@ -4,6 +4,16 @@ const modelSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
+  },
+  brand: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DeviceBrand',
+    required: true
+  },
+  type: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DeviceType',
+    required: true
   }
 });
 
@@ -11,10 +21,6 @@ const brandSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
-  },
-  models: {
-    type: [modelSchema],
-    required: false
   }
 });
 
@@ -22,13 +28,9 @@ const typeSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
-  },
-  brands: {
-    type: [brandSchema],
-    required: false
   }
 });
 
-const Device = mongoose.model('Device', typeSchema)
-
-export default Device;
+export const DeviceType = mongoose.model('DeviceType', typeSchema);
+export const DeviceBrand = mongoose.model('DeviceBrand', brandSchema);
+export const DeviceModel = mongoose.model('DeviceModel', modelSchema);
