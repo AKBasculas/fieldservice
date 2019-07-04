@@ -110,25 +110,22 @@ app.post('/register', (req, res, next) => {
   //Validate request data
   if (validate(req.body, constraints.CREATE_USER) != undefined) return res.sendStatus(406);
   if(!req.body.branches.every( branch => branch && typeof(branch) === "string")) return res.sendStatus(406);
-  //Check if user exists
+  //Check if user exists with that username
   models.User.findOne({username: req.body.username}, function (err, user){
     if (err) return next(err);
-    if (user) return res.status(409).send("That user already exists.");
+    if (user) return res.status(409).send("A user with that username already exists.");
     //TODO: Verify username and password to be valid
     //Check if role exists
     if (!permissions.ROLES.hasOwnProperty(req.body.role)) return res.sendStatus(406);
     //Check if branches exist
-    models.Branch.find({name: {$in: req.body.branches}}, function(err, branches){
-      if (!branches) return res.status(404).send("Couldn't find any branch");
+    models.Branch.find({_id: {$in: req.body.branches.map(b => mongoose.Types.ObjectId(b))}}, function(err, branches){
       if (req.body.branches.length != branches.length) return res.status(404).send("Couldn't find one of the branches");
-      //Turn array of branch objects into array of ids
-      let branches_ids = branches.map( b => b._id);
       //Create new user
       let new_user = new models.User({
         username: req.body.username,
         password: req.body.password,
         role: req.body.role,
-        branches: branches_ids
+        branches: req.body.branches
       });
       //Save user
       new_user.save(function(err){
@@ -143,10 +140,10 @@ app.post('/register', (req, res, next) => {
 app.post('/branch', (req, res, next) => {
   //Validate request data
   if (validate(req.body.branch, constraints.CREATE_BRANCH) != undefined) return res.sendStatus(406);
-  //Check if branch exists
+  //Check if branch exists with that name
   models.Branch.findOne({name: req.body.branch.name}, function(err, branch){
     if (err) return next(err);
-    if (branch) return res.status(409).send("This branch already exists.");
+    if (branch) return res.status(409).send("A branch with that name already exists.");
     //Create new branch
     let new_branch = new models.Branch({
       name: req.body.branch.name
@@ -163,10 +160,10 @@ app.post('/branch', (req, res, next) => {
 app.post('/service', (req, res, next) => {
   //Validate request data
   if (validate(req.body.service, constraints.CREATE_SERVICE) != undefined) return res.sendStatus(406);
-  //Check if service exists
+  //Check if service exists with that name
   models.Service.findOne({name: req.body.service.name}, function(err, service){
     if (err) return next(err);
-    if (service) return res.status(409).send("This service already exists.");
+    if (service) return res.status(409).send("A service with that name already exists.");
     //Create new service
     let new_service = new models.Service({
       name: req.body.service.name
@@ -201,17 +198,18 @@ app.post('/company', (req, res, next) => {
   //Check if company exists with that name
   models.Company.findOne({name: req.body.company.name}, function(err, company){
     if (err) return next(err);
-    if (company) return res.status(409).send("This company name already exists.");
+    if (company) return res.status(409).send("A company with that name already exists.");
     //Check if user can add company to that branch
-    if (!req.user.branches.some( b => b.name == req.body.company.branch)) return res.sendStatus(406);
+    if (!req.user.branches.some( b => b._id.toString() === req.body.company.branch)) return res.sendStatus(406);
     //Find branch and its id
-    models.Branch.findOne({name: req.body.company.branch}, function(err, branch){
+    models.Branch.findById(req.body.company.branch, function(err, branch){
       if (err) return next(err);
+      if (!branch) return res.status(404).send("Couldn't find that branch.");
       //Save company
       let new_company = new models.Company({
         name: req.body.company.name,
         address: req.body.company.address,
-        branch: branch._id
+        branch: req.body.company.branch
       });
       new_company.save(function(err){
         if (err) return next(err);
@@ -356,14 +354,16 @@ app.post('/person', (req, res, next) => {
     if (err) return next(err);
     if (person) return res.status(409).send("This person number already exists");
     //Check if user can add person with that branch
-    if (!req.user.branches.some( b => b.name == req.body.person.branch)) return res.sendStatus(406);
+    if (!req.user.branches.some( b => b._id.toString() === req.body.person.branch)) return res.sendStatus(406);
     //Find branch
-    models.Branch.findOne({name: req.body.person.branch}, function(err, branch){
+    models.Branch.findById(req.body.person.branch, function(err, branch){
+      if (err) return next(err);
+      if (!branch) return res.status(404).send("Couldn't find that branch.");
       //Create new person
       let new_person = new models.Person({
         name: req.body.person.name,
         number: req.body.person.number,
-        branch: branch._id
+        branch: req.body.person.branch
       });
       //Save person
       new_person.save(function(err){
@@ -383,14 +383,16 @@ app.post('/vehicle', (req, res, next) => {
     if (err) return next(err);
     if (vehicle) return res.status(409).send("This vehicle alias already exists");
     //Check if user can add vehicle with that branch
-    if(!req.user.branches.some( b => b.name == req.body.vehicle.branch)) return res.sendStatus(406);
+    if(!req.user.branches.some( b => b._id.toString() === req.body.vehicle.branch)) return res.sendStatus(406);
     //Find branch
-    models.Branch.findOne({name: req.body.vehicle.branch}, function(err, branch){
+    models.Branch.findById(req.body.vehicle.branch, function(err, branch){
+      if (err) return next(err);
+      if (!branch) return res.status(404).send("Couldn't find that branch.");
       //Create new vehicle
       let new_vehicle = new models.Vehicle({
         name: req.body.vehicle.name,
         alias: req.body.vehicle.alias,
-        branch: branch._id
+        branch: req.body.vehicle.branch
       });
       //Save vehicle
       new_vehicle.save(function(err){
