@@ -1,6 +1,6 @@
 //Constraints
-//Register
-const REGISTER = {
+//Create user
+const CREATE_USER = {
   username: {
     type: "string",
     presence: {
@@ -27,8 +27,8 @@ const REGISTER = {
   }
 }
 
-//Branch
-const BRANCH = {
+//Create branch
+const CREATE_BRANCH = {
   name: {
     type: "string",
     presence: {
@@ -37,8 +37,8 @@ const BRANCH = {
   }
 }
 
-//Service
-const SERVICE = {
+//Create service
+const CREATE_SERVICE = {
   name: {
     type: "string",
     presence: {
@@ -47,8 +47,8 @@ const SERVICE = {
   }
 }
 
-//Company
-const COMPANY = {
+//Create company
+const CREATE_COMPANY = {
   name: {
     type: "string",
     presence: {
@@ -69,8 +69,8 @@ const COMPANY = {
   }
 }
 
-//Contact
-const CONTACT = {
+//Create contact
+const CREATE_CONTACT = {
   name: {
     type: "string",
     presence: {
@@ -82,7 +82,7 @@ const CONTACT = {
   }
 }
 
-//Device
+//Create device type
 const CREATE_DEVICE_TYPE = {
   name: {
     type: "string",
@@ -91,6 +91,8 @@ const CREATE_DEVICE_TYPE = {
     }
   }
 }
+
+//Create device brand
 const CREATE_DEVICE_BRAND = {
   name: {
     type: "string",
@@ -99,6 +101,8 @@ const CREATE_DEVICE_BRAND = {
     }
   }
 }
+
+//Create device model
 const CREATE_DEVICE_MODEL = {
   name: {
     type: "string",
@@ -120,7 +124,8 @@ const CREATE_DEVICE_MODEL = {
   }
 }
 
-const OWNERSHIP = {
+//Create ownership
+const CREATE_OWNERSHIP = {
   name: {
     type: "string",
     presence: {
@@ -129,7 +134,8 @@ const OWNERSHIP = {
   }
 }
 
-const PERSON = {
+//Create person
+const CREATE_PERSON = {
   name: {
     type: "string",
     presence: {
@@ -150,7 +156,8 @@ const PERSON = {
   }
 }
 
-const VEHICLE = {
+//Create vehicle
+const CREATE_VEHICLE = {
   name: {
     type: "string",
     presence: {
@@ -171,7 +178,8 @@ const VEHICLE = {
   }
 }
 
-const ENTRY = {
+//Create entry
+const CREATE_ENTRY = {
   ENTRY: {
     branch: {
       type: "string",
@@ -266,15 +274,15 @@ const ADD_COMPANY_CONTACTS = {
 }
 
 const constraints = {
-  BRANCH,
-  SERVICE,
-  COMPANY,
-  CONTACT,
-  REGISTER,
-  OWNERSHIP,
-  PERSON,
-  VEHICLE,
-  ENTRY,
+  CREATE_BRANCH,
+  CREATE_SERVICE,
+  CREATE_COMPANY,
+  CREATE_CONTACT,
+  CREATE_USER,
+  CREATE_OWNERSHIP,
+  CREATE_PERSON,
+  CREATE_VEHICLE,
+  CREATE_ENTRY,
   ADD_COMPANY_CONTACTS,
   CREATE_DEVICE_TYPE,
   CREATE_DEVICE_BRAND,

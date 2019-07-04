@@ -79,16 +79,19 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //permissions
-app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.BRANCH.CREATE]));
-app.use(['/register'], permissions.permit([permissions.PERMISSIONS.USER.CREATE]));
-app.use(['/service'], permissions.permit([permissions.PERMISSIONS.SERVICE.CREATE]));
-app.use(['/company'], permissions.permit([permissions.PERMISSIONS.COMPANY.CREATE]));
-app.use(['/device/type'], permissions.permit([permissions.PERMISSIONS.DEVICE.TYPE]));
-app.use(['/device/brand'], permissions.permit([permissions.PERMISSIONS.DEVICE.BRAND]));
-app.use(['/device/model'], permissions.permit([permissions.PERMISSIONS.DEVICE.MODEL]));
-app.use(['/ownership'], permissions.permit([permissions.PERMISSIONS.OWNERSHIP.CREATE]))
-app.use(['/person'], permissions.permit([permissions.PERMISSIONS.PERSON.CREATE]));
-app.use(['/vehicle'], permissions.permit([permissions.PERMISSIONS.VEHICLE.CREATE]));
+app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.CREATE_BRANCH]));
+app.use(['/register'], permissions.permit([permissions.PERMISSIONS.CREATE_USER]));
+app.use(['/service'], permissions.permit([permissions.PERMISSIONS.CREATE_SERVICE]));
+app.use(['/contact'], permissions.permit([permissions.PERMISSIONS.CREATE_CONTACT]))
+app.use(['/company'], permissions.permit([permissions.PERMISSIONS.CREATE_COMPANY]));
+app.use(['/company/contact'], permissions.permit([permissions.PERMISSIONS.ADD_COMPANY_CONTACTS]));
+app.use(['/device/type'], permissions.permit([permissions.PERMISSIONS.CREATE_DEVICE_TYPE]));
+app.use(['/device/brand'], permissions.permit([permissions.PERMISSIONS.CREATE_DEVICE_BRAND]));
+app.use(['/device/model'], permissions.permit([permissions.PERMISSIONS.CREATE_DEVICE_MODEL]));
+app.use(['/ownership'], permissions.permit([permissions.PERMISSIONS.CREATE_OWNERSHIP]))
+app.use(['/person'], permissions.permit([permissions.PERMISSIONS.CREATE_PERSON]));
+app.use(['/vehicle'], permissions.permit([permissions.PERMISSIONS.CREATE_VEHICLE]));
+app.use(['/entry'], permissions.permit([permissions.PERMISSIONS.CREATE_ENTRY]));
 
 //Routing
 //Login to local db
@@ -105,7 +108,7 @@ app.get('/logout', function(req, res){
 //Create user
 app.post('/register', (req, res, next) => {
   //Validate request data
-  if (validate(req.body, constraints.REGISTER) != undefined) return res.sendStatus(406);
+  if (validate(req.body, constraints.CREATE_USER) != undefined) return res.sendStatus(406);
   if(!req.body.branches.every( branch => branch && typeof(branch) === "string")) return res.sendStatus(406);
   //Check if user exists
   models.User.findOne({username: req.body.username}, function (err, user){
@@ -139,7 +142,7 @@ app.post('/register', (req, res, next) => {
 //Create branch
 app.post('/branch', (req, res, next) => {
   //Validate request data
-  if (validate(req.body.branch, constraints.BRANCH) != undefined) return res.sendStatus(406);
+  if (validate(req.body.branch, constraints.CREATE_BRANCH) != undefined) return res.sendStatus(406);
   //Check if branch exists
   models.Branch.findOne({name: req.body.branch.name}, function(err, branch){
     if (err) return next(err);
@@ -159,7 +162,7 @@ app.post('/branch', (req, res, next) => {
 //Create service
 app.post('/service', (req, res, next) => {
   //Validate request data
-  if (validate(req.body.service, constraints.SERVICE) != undefined) return res.sendStatus(406);
+  if (validate(req.body.service, constraints.CREATE_SERVICE) != undefined) return res.sendStatus(406);
   //Check if service exists
   models.Service.findOne({name: req.body.service.name}, function(err, service){
     if (err) return next(err);
@@ -179,7 +182,7 @@ app.post('/service', (req, res, next) => {
 //Create contact
 app.post('/contact', (req, res, next) =>{
   //Validate request data
-  if(validate(req.body.contact, constraints.CONTACT) != undefined) return res.sendStatus(406);
+  if(validate(req.body.contact, constraints.CREATE_CONTACT) != undefined) return res.sendStatus(406);
   //Create new contact
   let new_contact = new models.Contact({
     name: req.body.contact.name,
@@ -194,7 +197,7 @@ app.post('/contact', (req, res, next) =>{
 //Create company
 app.post('/company', (req, res, next) => {
   //Validate request data
-  if(validate(req.body.company, constraints.COMPANY) != undefined) return res.sendStatus(406);
+  if(validate(req.body.company, constraints.CREATE_COMPANY) != undefined) return res.sendStatus(406);
   //Check if company exists with that name
   models.Company.findOne({name: req.body.company.name}, function(err, company){
     if (err) return next(err);
@@ -327,7 +330,7 @@ app.post('/device/model', (req, res, next) => {
 //Create ownership
 app.post('/ownership', (req, res, next) => {
   //Validate request data
-  if(validate(req.body.ownership, constraints.OWNERSHIP) != undefined) return res.sendStatus(406);
+  if(validate(req.body.ownership, constraints.CREATE_OWNERSHIP) != undefined) return res.sendStatus(406);
   //Check if ownership exists
   models.Ownership.findOne({name: req.body.ownership.name}, function(err, ownership){
     if (err) return next(err);
@@ -347,7 +350,7 @@ app.post('/ownership', (req, res, next) => {
 //Create person
 app.post('/person', (req, res, next) => {
   //Validate request data
-  if (validate(req.body.person, constraints.PERSON) != undefined) return res.sendStatus(406);
+  if (validate(req.body.person, constraints.CREATE_PERSON) != undefined) return res.sendStatus(406);
   //Check if person number exists
   models.Person.findOne({number: req.body.person.number}, function(err, person){
     if (err) return next(err);
@@ -374,7 +377,7 @@ app.post('/person', (req, res, next) => {
 //Create vehicle
 app.post('/vehicle', (req, res, next) => {
   //Validate request data
-  if (validate(req.body.vehicle, constraints.VEHICLE) != undefined) return res.sendStatus(406);
+  if (validate(req.body.vehicle, constraints.CREATE_VEHICLE) != undefined) return res.sendStatus(406);
   //Check if vehicle alias exists
   models.Vehicle.findOne({alias: req.body.vehicle.alias}, function(err, vehicle){
     if (err) return next(err);
@@ -401,10 +404,10 @@ app.post('/vehicle', (req, res, next) => {
 //Create entry
 app.post('/entry', (req, res, next) => {
   //Validate request data
-  if (validate(req.body.entry, constraints.ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
+  if (validate(req.body.entry, constraints.CREATE_ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
   if (!req.body.entry.contacts.every( contact => contact && typeof(contact) === "string")) return res.status(406).send("Contacts Not Acceptable");
   if (!req.body.entry.devicemodels.every( devicemodel => devicemodel && typeof(devicemodel) === "string")) return res.status(406).send("Devices Not Acceptable");
-  if (!req.body.entry.periods.every( period => validate(period, constraints.ENTRY.PERIOD) === undefined)) return res.status(406).send("Periods Not Acceptable");
+  if (!req.body.entry.periods.every( period => validate(period, constraints.CREATE_ENTRY.PERIOD) === undefined)) return res.status(406).send("Periods Not Acceptable");
   if (!req.body.entry.periods.every( period => period.people.every(person => person && typeof(person === "string")) && period.vehicles.every(vehicle => vehicle && typeof(vehicle === "string")))) return res.status(406).send("Person and vehicle Not Acceptable");
   //Check if user can add to that branch
   if (!req.user.branches.some(b => b._id == req.body.entry.branch)) return res.status(406).send("User Not Acceptable");
@@ -511,7 +514,7 @@ app.post('/entry', (req, res, next) => {
 
 //TESTING
 app.get('/test', (req, res, next) => {
-  models.Entry.find({periods: {$elemMatch: {$and: [{$or: [{$and: [{starttime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {starttime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]},{$and: [{endtime:{$gt: new Date("2012-04-21T18:25:43.511Z")}}, {endtime:{$lt: new Date("2012-04-25T18:25:43.511Z")}}]}]},{$or: [{vehicles: {$in: [mongoose.Types.ObjectId("5d151087faa00c2058aef65d")]}}, {people: {$in: [mongoose.Types.ObjectId("5d1508d4fb84f9059051d906")]}}]}]}}}).populate('periods.people').populate('user', 'username').populate('contacts').exec(function(err, entry){
+  models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){
     if (err) next(err);
     res.send(entry);
   });
@@ -531,7 +534,5 @@ app.delete('/', (req, res) => {
 
 app.listen(process.env.PORT, () => console.log(`Example app listening on port ${process.env.PORT}!`))
 
-//TODO: Refactor CONSTRAINTS
-//TODO: Refactor PERMISSIONS
 //TODO: Data should be sent with ids when refrencing an object when creating new models
 //TODO: Validate ids to be 24 chars
