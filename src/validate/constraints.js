@@ -63,6 +63,9 @@ const CREATE_COMPANY = {
   },
   branch: {
     type: "string",
+    length: {
+      is: 24
+    },
     presence: {
       allowEmpty: false
     }
@@ -112,12 +115,18 @@ const CREATE_DEVICE_MODEL = {
   },
   brand: {
     type: "string",
+    length: {
+      is: 24
+    },
     presence: {
       allowEmpty: false
     }
   },
   type: {
     type: "string",
+    length: {
+      is: 24
+    },
     presence: {
       allowEmpty: false
     }
@@ -150,6 +159,9 @@ const CREATE_PERSON = {
   },
   branch: {
     type: "string",
+    length: {
+      is: 24
+    },
     presence: {
       allowEmpty: false
     }
@@ -172,6 +184,9 @@ const CREATE_VEHICLE = {
   },
   branch: {
     type: "string",
+    length: {
+      is: 24
+    },
     presence: {
       allowEmpty: false
     }
@@ -183,18 +198,27 @@ const CREATE_ENTRY = {
   ENTRY: {
     branch: {
       type: "string",
+      length: {
+        is: 24
+      },
       presence: {
         allowEmpty: false
       }
     },
     service: {
       type: "string",
+      length: {
+        is: 24
+      },
       presence: {
         allowEmpty: false
       }
     },
     company: {
       type: "string",
+      length: {
+        is: 24
+      },
       presence: {
         allowEmpty: false
       }
@@ -225,6 +249,9 @@ const CREATE_ENTRY = {
     },
     ownership: {
       type: "string",
+      length: {
+        is: 24
+      },
       presence: {
         allowEmpty: false
       }
@@ -273,7 +300,15 @@ const ADD_COMPANY_CONTACTS = {
   }
 }
 
+const ID = {
+  type: "string",
+  length: {
+    is: 24
+  }
+}
+
 const constraints = {
+  ID,
   CREATE_BRANCH,
   CREATE_SERVICE,
   CREATE_COMPANY,

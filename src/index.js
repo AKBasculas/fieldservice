@@ -109,7 +109,7 @@ app.get('/logout', function(req, res){
 app.post('/register', (req, res, next) => {
   //Validate request data
   if (validate(req.body, constraints.CREATE_USER) != undefined) return res.sendStatus(406);
-  if(!req.body.branches.every( branch => branch && typeof(branch) === "string")) return res.sendStatus(406);
+  if(!req.body.branches.every( branch => validate.single(branch, constraints.ID) === undefined)) return res.sendStatus(406);
   //Check if user exists with that username
   models.User.findOne({username: req.body.username}, function (err, user){
     if (err) return next(err);
@@ -407,10 +407,10 @@ app.post('/vehicle', (req, res, next) => {
 app.post('/entry', (req, res, next) => {
   //Validate request data
   if (validate(req.body.entry, constraints.CREATE_ENTRY.ENTRY) != undefined) return res.status(406).send("ENTRY Not Acceptable");
-  if (!req.body.entry.contacts.every( contact => contact && typeof(contact) === "string")) return res.status(406).send("Contacts Not Acceptable");
-  if (!req.body.entry.devicemodels.every( devicemodel => devicemodel && typeof(devicemodel) === "string")) return res.status(406).send("Devices Not Acceptable");
+  if (!req.body.entry.contacts.every( contact => validate.single(contact, constraints.ID) === undefined)) return res.status(406).send("Contacts Not Acceptable");
+  if (!req.body.entry.devicemodels.every( devicemodel => validate.single(devicemodel, constraints.ID) === undefined)) return res.status(406).send("Devices Not Acceptable");
   if (!req.body.entry.periods.every( period => validate(period, constraints.CREATE_ENTRY.PERIOD) === undefined)) return res.status(406).send("Periods Not Acceptable");
-  if (!req.body.entry.periods.every( period => period.people.every(person => person && typeof(person === "string")) && period.vehicles.every(vehicle => vehicle && typeof(vehicle === "string")))) return res.status(406).send("Person and vehicle Not Acceptable");
+  if (!req.body.entry.periods.every( period => period.people.every(person => validate.single(person, constraints.ID) === undefined) && period.vehicles.every(vehicle => validate.single(vehicle, constraints.ID) === undefined))) return res.status(406).send("Person and vehicle Not Acceptable");
   //Check if user can add to that branch
   if (!req.user.branches.some(b => b._id == req.body.entry.branch)) return res.status(406).send("User Not Acceptable");
   //Check if branch exists
@@ -535,6 +535,3 @@ app.delete('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => console.log(`Example app listening on port ${process.env.PORT}!`))
-
-//TODO: Data should be sent with ids when refrencing an object when creating new models
-//TODO: Validate ids to be 24 chars
