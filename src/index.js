@@ -514,6 +514,28 @@ app.post('/entry', (req, res, next) => {
   });
 });
 
+//Read branches
+app.get('/branch', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_BRANCHES) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.Branch.find({name: {$regex: exp, $options: 'i'}}, function(err, branches){
+    if (err) return next(err);
+    return res.send(branches);
+  });
+});
+
+//Read services
+app.get('/service', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_SERVICES) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.Service.find({name: {$regex: exp, $options: 'i'}}, function(err, services){
+    if (err) return next(err);
+    return res.send(services);
+  });
+});
+
 //TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){
