@@ -560,6 +560,17 @@ app.get('/contact', (req, res, next) => {
   });
 });
 
+//Read companies
+app.get('/company', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_COMPANIES) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.Company.find({name: {$regex: exp, $options: 'i'}}, function(err, company){
+    if (err) return next(err);
+    return res.send(company);
+  });
+});
+
 //TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){

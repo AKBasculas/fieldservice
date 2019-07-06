@@ -327,6 +327,13 @@ const READ_CONTACTS = {
   }
 }
 
+const READ_COMPANIES = {
+  name: {
+    type: "string",
+    presence: true
+  }
+}
+
 const ID = {
   type: "string",
   length: {
@@ -351,6 +358,7 @@ const constraints = {
   CREATE_DEVICE_MODEL,
   READ_BRANCHES,
   READ_SERVICES,
-  READ_CONTACTS
+  READ_CONTACTS,
+  READ_COMPANIES
 };
 export default constraints;
