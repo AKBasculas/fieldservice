@@ -355,6 +355,20 @@ const READ_DEVICE_MODELS = {
   }
 }
 
+const READ_OWNERSHIPS = {
+  name: {
+    type: "string",
+    presence: true
+  }
+}
+
+const READ_PEOPLE = {
+  name: {
+    type: "string",
+    presence: true
+  }
+}
+
 const ID = {
   type: "string",
   length: {
@@ -383,6 +397,8 @@ const constraints = {
   READ_COMPANIES,
   READ_DEVICE_TYPES,
   READ_DEVICE_BRANDS,
-  READ_DEVICE_MODELS
+  READ_DEVICE_MODELS,
+  READ_OWNERSHIPS,
+  READ_PEOPLE
 };
 export default constraints;
