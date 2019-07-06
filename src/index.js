@@ -180,14 +180,22 @@ app.post('/service', (req, res, next) => {
 app.post('/contact', (req, res, next) =>{
   //Validate request data
   if(validate(req.body.contact, constraints.CREATE_CONTACT) != undefined) return res.sendStatus(406);
-  //Create new contact
-  let new_contact = new models.Contact({
-    name: req.body.contact.name,
-    phone: req.body.contact.phone
-  });
-  new_contact.save(function(err){
+  //Find company
+  models.Company.findById(req.body.contact.company, function(err, company){
     if (err) return next(err);
-    return res.status(200).send("The contact has been registered");
+    if (!company) return res.status(404).send("Couldn't find that company.");
+    //Check if company falls within user branches
+    if (!req.user.branches.some( b => b._id.toString() === company.branch.toString())) return res.sendStatus(406);
+    //Create new contact
+    let new_contact = new models.Contact({
+      name: req.body.contact.name,
+      phone: req.body.contact.phone,
+      company: req.body.contact.company
+    });
+    new_contact.save(function(err){
+      if (err) return next(err);
+      return res.status(200).send("The contact has been registered");
+    });
   });
 });
 
@@ -220,38 +228,38 @@ app.post('/company', (req, res, next) => {
 });
 
 //Add company contacts
-app.put('/company/contacts', (req, res, next) => {
-  //Validate request data
-  if(validate(req.body, constraints.ADD_COMPANY_CONTACTS) != undefined) return res.sendStatus(406);
-  if(!req.body.contacts.every( contact => contact && typeof(contact) === "string")) return res.sendStatus(406);
-  //Check if company exists for user branches
-  models.Company.findOne({
-    $and: [
-      {_id: mongoose.Types.ObjectId(req.body.company)},
-      {branch: {$in: req.user.branches.map( b => mongoose.Types.ObjectId(b._id))}}
-    ]
-  }, function(err, company){
-    if (err) return next(err);
-    if (!company) return res.status(404).send("Couldn't find that company.");
-    //Check if contacts exist
-    models.Contact.find({
-      _id: {
-        $in: req.body.contacts.map(c => mongoose.Types.ObjectId(c))
-      }
-    }, function(err, contacts){
-      if (contacts.length != req.body.contacts.length) return res.status(404).send("Couldn't find one of the contacts");
-      //Add contacts to company if they don't already exist
-      contacts.forEach(contact => {
-        if (!company.contacts.some(c => c.toString() == contact._id)) company.contacts.push(contact._id);
-      });
-      //Save company
-      company.save(function(err){
-        if (err) return next(err);
-        return res.status(200).send("The contacts have been added to the company.")
-      });
-    });
-  });
-});
+// app.put('/company/contacts', (req, res, next) => {
+//   //Validate request data
+//   if(validate(req.body, constraints.ADD_COMPANY_CONTACTS) != undefined) return res.sendStatus(406);
+//   if(!req.body.contacts.every( contact => contact && typeof(contact) === "string")) return res.sendStatus(406);
+//   //Check if company exists for user branches
+//   models.Company.findOne({
+//     $and: [
+//       {_id: mongoose.Types.ObjectId(req.body.company)},
+//       {branch: {$in: req.user.branches.map( b => mongoose.Types.ObjectId(b._id))}}
+//     ]
+//   }, function(err, company){
+//     if (err) return next(err);
+//     if (!company) return res.status(404).send("Couldn't find that company.");
+//     //Check if contacts exist
+//     models.Contact.find({
+//       _id: {
+//         $in: req.body.contacts.map(c => mongoose.Types.ObjectId(c))
+//       }
+//     }, function(err, contacts){
+//       if (contacts.length != req.body.contacts.length) return res.status(404).send("Couldn't find one of the contacts");
+//       //Add contacts to company if they don't already exist
+//       contacts.forEach(contact => {
+//         if (!company.contacts.some(c => c.toString() == contact._id)) company.contacts.push(contact._id);
+//       });
+//       //Save company
+//       company.save(function(err){
+//         if (err) return next(err);
+//         return res.status(200).send("The contacts have been added to the company.")
+//       });
+//     });
+//   });
+// });
 
 //Create device type
 app.post('/device/type', (req, res, next) => {
@@ -425,88 +433,93 @@ app.post('/entry', (req, res, next) => {
       models.Company.findById(req.body.entry.company, function(err, company){
         if (err) return next(err);
         if (!company) return res.status(404).send("Couldn't find that company");
-        //Check if contacts exist in that company
-        if (!req.body.entry.contacts.every(contact => company.contacts.some(c => c.toString() === contact))) return res.status(404).send("Couldn't find one of the contacts");
-        //Check if ownership exists
-        models.Ownership.findById(req.body.entry.ownership, function(err, ownership){
+        //Check if contacts exist
+        models.Contact.find({_id:{$in: req.body.entry.contacts.map(c => mongoose.Types.ObjectId(c))}}, function(err, contacts){
           if (err) return next(err);
-          if (!ownership) return res.status(404).send("Couldn't find that ownership");
-          //TODO: Check if device models exist
-          models.DeviceModel.find({_id: {$in: req.body.entry.devicemodels.map(d => mongoose.Types.ObjectId(d))}}, function(err, devicemodels){
+          if (contacts.length != req.body.entry.contacts.length) return res.status(404).send("Couldn't find a contact");
+          //Check each contacts company to match the actual company
+          if(!contacts.every(c => c.company.toString() === company._id.toString())) return res.sendStatus(406);
+          //Check if ownership exists
+          models.Ownership.findById(req.body.entry.ownership, function(err, ownership){
             if (err) return next(err);
-            if (devicemodels.length != req.body.entry.devicemodels.length) return res.status(404).send("Couldn't find one of the device models");
-            try{
-              //Check if period has correct datetimes, check persons and vehicles exist
-              (async function checkPeriod(){
-                for (let i = 0; i < req.body.entry.periods.length; i++){
-                  let period = req.body.entry.periods[i];
-                  if (Date.parse(period.starttime) >= Date.parse(period.endtime)) return res.sendStatus(406);
-                  //Check if people exist
-                  for (let j = 0; j < period.people.length; j++){
-                    let person = period.people[j];
-                    if (!await models.Person.findById(person).exec()) return res.status(404).send("Couldn't find a person");
-                  }
-                  //Check if vehicles exist
-                  for (let j = 0; j < period.vehicles.length; j++){
-                    let vehicle = period.vehicles[j];
-                    if (!await models.Vehicle.findById(vehicle).exec()) return res.status(404).send("Couldn't find a vehicle");
-                  }
-                  //Check if there is splices of people or vehicles
-                  const entries = await models.Entry.find({
-                    periods: {
-                      $elemMatch: {
-                        $and: [
-                          {
-                            $or: [
-                              {
-                                $and: [
-                                  {starttime:{$gte: new Date(period.starttime)}},
-                                  {starttime:{$lte: new Date(period.endtime)}}
-                                ]
-                              },
-                              {
-                                $and: [
-                                  {endtime:{$gte: new Date(period.starttime)}},
-                                  {endtime:{$lte: new Date(period.endtime)}}
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            $or: [
-                              {vehicles: {$in: period.vehicles.map(v => mongoose.Types.ObjectId(v))}},
-                              {people: {$in: period.people.map(p => mongoose.Types.ObjectId(p))}}
-                            ]
-                          }
-                        ]
-                      }
+            if (!ownership) return res.status(404).send("Couldn't find that ownership");
+            //Check if device models exist
+            models.DeviceModel.find({_id: {$in: req.body.entry.devicemodels.map(d => mongoose.Types.ObjectId(d))}}, function(err, devicemodels){
+              if (err) return next(err);
+              if (devicemodels.length != req.body.entry.devicemodels.length) return res.status(404).send("Couldn't find one of the device models");
+              try{
+                //Check if period has correct datetimes, check persons and vehicles exist
+                (async function checkPeriod(){
+                  for (let i = 0; i < req.body.entry.periods.length; i++){
+                    let period = req.body.entry.periods[i];
+                    if (Date.parse(period.starttime) >= Date.parse(period.endtime)) return res.sendStatus(406);
+                    //Check if people exist
+                    for (let j = 0; j < period.people.length; j++){
+                      let person = period.people[j];
+                      if (!await models.Person.findById(person).exec()) return res.status(404).send("Couldn't find a person");
                     }
-                  }).exec();
-                  if(entries.length) return res.status(409).send("Space ocuppied");
-                }
-                //Create entry
-                let new_entry = new models.Entry({
-                  user: req.user._id,
-                  branch: req.body.entry.branch,
-                  service: req.body.entry.service,
-                  company: req.body.entry.company,
-                  contacts: req.body.entry.contacts,
-                  devicemodels: req.body.entry.devicemodels,
-                  periods: req.body.entry.periods,
-                  cost: req.body.entry.cost,
-                  ownership: req.body.entry.ownership,
-                  comments: req.body.entry.comments
-                });
-                //Save entry
-                new_entry.save(function(err){
-                  if (err) return next(err);
-                  return res.status(200).send("The entry has been registered");
-                });
-              })();
-            }
-            catch (err){
-              return next(err);
-            }
+                    //Check if vehicles exist
+                    for (let j = 0; j < period.vehicles.length; j++){
+                      let vehicle = period.vehicles[j];
+                      if (!await models.Vehicle.findById(vehicle).exec()) return res.status(404).send("Couldn't find a vehicle");
+                    }
+                    //Check if there is splices of people or vehicles
+                    const entries = await models.Entry.find({
+                      periods: {
+                        $elemMatch: {
+                          $and: [
+                            {
+                              $or: [
+                                {
+                                  $and: [
+                                    {starttime:{$gte: new Date(period.starttime)}},
+                                    {starttime:{$lte: new Date(period.endtime)}}
+                                  ]
+                                },
+                                {
+                                  $and: [
+                                    {endtime:{$gte: new Date(period.starttime)}},
+                                    {endtime:{$lte: new Date(period.endtime)}}
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              $or: [
+                                {vehicles: {$in: period.vehicles.map(v => mongoose.Types.ObjectId(v))}},
+                                {people: {$in: period.people.map(p => mongoose.Types.ObjectId(p))}}
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }).exec();
+                    if(entries.length) return res.status(409).send("Space ocuppied");
+                  }
+                  //Create entry
+                  let new_entry = new models.Entry({
+                    user: req.user._id,
+                    branch: req.body.entry.branch,
+                    service: req.body.entry.service,
+                    company: req.body.entry.company,
+                    contacts: req.body.entry.contacts,
+                    devicemodels: req.body.entry.devicemodels,
+                    periods: req.body.entry.periods,
+                    cost: req.body.entry.cost,
+                    ownership: req.body.entry.ownership,
+                    comments: req.body.entry.comments
+                  });
+                  //Save entry
+                  new_entry.save(function(err){
+                    if (err) return next(err);
+                    return res.status(200).send("The entry has been registered");
+                  });
+                })();
+              }
+              catch (err){
+                return next(err);
+              }
+            });
           });
         });
       });

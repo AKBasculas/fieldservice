@@ -8,6 +8,11 @@ const contactSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: false
+  },
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true
   }
 });
 

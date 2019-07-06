@@ -82,6 +82,12 @@ const CREATE_CONTACT = {
   },
   phone: {
     type: "string"
+  },
+  company: {
+    type: "string",
+    presence: {
+      allowEmpty: false
+    }
   }
 }
 
