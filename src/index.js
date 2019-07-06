@@ -549,6 +549,17 @@ app.get('/service', (req, res, next) => {
   });
 });
 
+//Read contacts
+app.get('/contact', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_CONTACTS) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.Contact.find({name: {$regex: exp, $options: 'i'}}, function(err, contacts){
+    if (err) return next(err);
+    return res.send(contacts);
+  });
+});
+
 //TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){
