@@ -571,6 +571,39 @@ app.get('/company', (req, res, next) => {
   });
 });
 
+//Read device types
+app.get('/device/type', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_DEVICE_TYPES) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.DeviceType.find({name: {$regex: exp, $options: 'i'}}, function(err, devicetype){
+    if (err) return next(err);
+    return res.send(devicetype);
+  });
+});
+
+//Read device brands
+app.get('/device/brand', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_DEVICE_BRANDS) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.DeviceBrand.find({name: {$regex: exp, $options: 'i'}}, function(err, devicebrand){
+    if (err) return next(err);
+    return res.send(devicebrand);
+  });
+});
+
+//Read device models
+app.get('/device/model', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_DEVICE_MODELS) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.DeviceModel.find({name: {$regex: exp, $options: 'i'}}, function(err, devicemodel){
+    if (err) return next(err);
+    return res.send(devicemodel);
+  });
+});
+
 //TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){
