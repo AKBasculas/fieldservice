@@ -369,6 +369,28 @@ const READ_PEOPLE = {
   }
 }
 
+const READ_VEHICLES = {
+  name: {
+    type: "string",
+    presence: true
+  }
+}
+
+const READ_ENTRIES = {
+  starttime: {
+    datetime: true,
+    presence: {
+      allowEmpty: false
+    }
+  },
+  endtime: {
+    datetime: true,
+    presence: {
+      allowEmpty: false
+    }
+  },
+}
+
 const ID = {
   type: "string",
   length: {
@@ -399,6 +421,7 @@ const constraints = {
   READ_DEVICE_BRANDS,
   READ_DEVICE_MODELS,
   READ_OWNERSHIPS,
-  READ_PEOPLE
+  READ_PEOPLE,
+  READ_VEHICLES
 };
 export default constraints;

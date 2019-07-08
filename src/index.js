@@ -626,6 +626,27 @@ app.get('/person', (req, res, next) => {
   });
 });
 
+//Read vehicles
+app.get('/vehicle', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_VEHICLES) != undefined) return res.sendStatus(406);
+  let exp = `.*${req.body.query.name}.*`;
+  models.Vehicle.find({name: {$regex: exp, $options: 'i'}}, function(err, vehicles){
+    if (err) return next(err);
+    return res.send(vehicles);
+  });
+});
+
+//Read entries
+app.get('/entry', (req, res, next) => {
+  //Validate request data
+  if (validate(req.body.query, constraints.READ_ENTRIES) != undefined) return res.sendStatus(406);
+  models.Entry.find({periods: {$elemMatch: {starttime: {$gte: new Date(req.body.query.starttime)}, endtime: {$lte: new Date(req.body.query.endtime)}}}}, function(err, entries){
+    if (err) return next(err);
+    return res.send(entries);
+  });
+});
+
 //TESTING
 app.get('/test', (req, res, next) => {
   models.Entry.findOne().populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entry){
