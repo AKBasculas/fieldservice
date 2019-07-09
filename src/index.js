@@ -42,7 +42,7 @@ passport.serializeUser(function(user, cb){
 });
 
 passport.deserializeUser(function(id, cb){
-  models.User.findById(id).
+  models.User.findOne({_id: id}, {password: 0}).
   populate('branches').
   exec(function(err, user){
     if (err) return cb(err);
@@ -79,6 +79,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //permissions
+app.use(['/user'], permissions.permit([permissions.PERMISSIONS.READ_USER]));
 app.use(['/branch'], permissions.permit([permissions.PERMISSIONS.CREATE_BRANCH]));
 app.use(['/register'], permissions.permit([permissions.PERMISSIONS.CREATE_USER]));
 app.use(['/service'], permissions.permit([permissions.PERMISSIONS.CREATE_SERVICE]));
@@ -527,6 +528,11 @@ app.post('/entry', (req, res, next) => {
   });
 });
 
+//Read user
+app.get('/user', (req, res, next) => {
+  return res.send(req.user);
+})
+
 //Read branches
 app.get('/branch', (req, res, next) => {
   //Validate request data
@@ -554,7 +560,7 @@ app.get('/contact', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_CONTACTS) != undefined) return res.sendStatus(406);
   let exp = `.*${req.body.query.name}.*`;
-  models.Contact.find({name: {$regex: exp, $options: 'i'}}, function(err, contacts){
+  models.Contact.find({name: {$regex: exp, $options: 'i'}}).populate('company').exec(function(err, contacts){
     if (err) return next(err);
     return res.send(contacts);
   });
@@ -565,7 +571,7 @@ app.get('/company', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_COMPANIES) != undefined) return res.sendStatus(406);
   let exp = `.*${req.body.query.name}.*`;
-  models.Company.find({name: {$regex: exp, $options: 'i'}}, function(err, company){
+  models.Company.find({name: {$regex: exp, $options: 'i'}}).populate('branch').exec(function(err, company){
     if (err) return next(err);
     return res.send(company);
   });
@@ -598,7 +604,7 @@ app.get('/device/model', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_DEVICE_MODELS) != undefined) return res.sendStatus(406);
   let exp = `.*${req.body.query.name}.*`;
-  models.DeviceModel.find({name: {$regex: exp, $options: 'i'}}, function(err, devicemodel){
+  models.DeviceModel.find({name: {$regex: exp, $options: 'i'}}).populate('brand').populate('type').exec(function(err, devicemodel){
     if (err) return next(err);
     return res.send(devicemodel);
   });
@@ -620,7 +626,7 @@ app.get('/person', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_PEOPLE) != undefined) return res.sendStatus(406);
   let exp = `.*${req.body.query.name}.*`;
-  models.Person.find({name: {$regex: exp, $options: 'i'}}, function(err, people){
+  models.Person.find({name: {$regex: exp, $options: 'i'}}).populate('branch').exec(function(err, people){
     if (err) return next(err);
     return res.send(people);
   });
@@ -631,7 +637,7 @@ app.get('/vehicle', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_VEHICLES) != undefined) return res.sendStatus(406);
   let exp = `.*${req.body.query.name}.*`;
-  models.Vehicle.find({name: {$regex: exp, $options: 'i'}}, function(err, vehicles){
+  models.Vehicle.find({name: {$regex: exp, $options: 'i'}}).populate('branch').exec(function(err, vehicles){
     if (err) return next(err);
     return res.send(vehicles);
   });
@@ -641,7 +647,7 @@ app.get('/vehicle', (req, res, next) => {
 app.get('/entry', (req, res, next) => {
   //Validate request data
   if (validate(req.body.query, constraints.READ_ENTRIES) != undefined) return res.sendStatus(406);
-  models.Entry.find({periods: {$elemMatch: {starttime: {$gte: new Date(req.body.query.starttime)}, endtime: {$lte: new Date(req.body.query.endtime)}}}}, function(err, entries){
+  models.Entry.find({periods: {$elemMatch: {starttime: {$gte: new Date(req.body.query.starttime)}, endtime: {$lte: new Date(req.body.query.endtime)}}}}).populate('branch').populate('ownership').populate('periods.people periods.vehicles').populate('user', 'username').populate('contacts').populate('company').populate({path: 'devicemodels', populate: {path: 'brand type'}}).exec(function(err, entries){
     if (err) return next(err);
     return res.send(entries);
   });
